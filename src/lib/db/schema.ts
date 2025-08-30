@@ -82,7 +82,7 @@ export const dependencies = pgTable('dependencies', {
 export const embeddings = pgTable('embeddings', {
   id: uuid('id').primaryKey().defaultRandom(),
   content: text('content').notNull(),
-  vector: text('vector').notNull(), // pgvector will handle this
+  vector: text('vector').notNull(), // Store as JSON string, pgvector will handle conversion
   symbolId: uuid('symbol_id').references(() => symbols.id, { onDelete: 'cascade' }),
   model: text('model').notNull(),
   createdAt: timestamp('created_at').defaultNow(),

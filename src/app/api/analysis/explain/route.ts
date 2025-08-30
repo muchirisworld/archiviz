@@ -1,17 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBedrockEmbedding } from '@/lib/services/bedrock-api';
-import { db } from '@/lib/db';
-import { symbols } from '@/lib/db/schema';
+import { AIAnalysisService } from '@/lib/services/ai-analysis-service';
 
 // POST /api/analysis/explain
 export async function POST(req: NextRequest) {
-    const { symbolId } = await req.json();
-    if (!symbolId) return NextResponse.json({ error: 'symbolId required' }, { status: 400 });
-    const { eq } = await import('drizzle-orm');
-    const [symbol] = await db.select().from(symbols).where(eq(symbols.id, symbolId));
-    if (!symbol) return NextResponse.json({ error: 'Symbol not found' }, { status: 404 });
-    // Use Bedrock LLM to generate explanation (stub)
-    // TODO: Replace with real Bedrock LLM call for code explanation
-    const explanation = `This is a ${symbol.type} named ${symbol.name}.`;
-    return NextResponse.json({ explanation });
+    try {
+        const { symbolId } = await req.json();
+        
+        if (!symbolId) {
+            return NextResponse.json({ 
+                error: 'symbolId is required' 
+            }, { status: 400 });
+        }
+
+        const service = new AIAnalysisService();
+        const result = await service.analyzeCode(symbolId, 'explanation');
+        
+        return NextResponse.json({ 
+            success: true, 
+            result,
+            analysisType: 'explanation',
+            symbolId
+        });
+    } catch (error) {
+        console.error('Code explanation error:', error);
+        return NextResponse.json({ 
+            error: 'Explanation generation failed', 
+            details: error instanceof Error ? error.message : 'Unknown error' 
+        }, { status: 500 });
+    }
 }
